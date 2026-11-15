@@ -2,15 +2,6 @@ from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional, Any
 
 
-class RecomendacaoItem(BaseModel):
-    dish_name: str = Field(..., description="Nome do prato")
-    score: float = Field(...,
-                         description="Pontuação de similaridade ou distância vetorial")
-
-    class Config:
-        extra = "allow"
-
-
 class PedidoClienteSchema(BaseModel):
     query: str = Field(
         ...,
@@ -26,7 +17,9 @@ class PedidoClienteSchema(BaseModel):
     )
     min_score: Optional[float] = Field(
         None,
-        description="Pontuação mínima opcional para filtragem"
+        ge=0.0,
+        le=1.0,
+        description="Pontuação mínima de similaridade (0 a 1)"
     )
 
     @field_validator("query")
@@ -42,7 +35,7 @@ class PedidoClienteSchema(BaseModel):
             "example": {
                 "query": "Quero um prato leve com frango e vegetais",
                 "top_k": 3,
-                "min_score": 0.0
+                "min_score": 0.2
             }
         }
 
@@ -52,21 +45,22 @@ class RespostaRecomendacaoSchema(BaseModel):
     model: str = Field(..., description="Modelo de embeddings utilizado")
     latency_ms: float = Field(...,
                               description="Tempo de processamento em milissegundos")
-    results: List[Any] = Field(...,
-                               description="Lista de pratos recomendados com score")
+    message: str = Field(..., description="Mensagem descritiva do resultado")
+    results: List[Any] = Field(
+        ..., description="Lista de pratos recomendados com score de similaridade")
 
     class Config:
         json_schema_extra = {
             "example": {
                 "query": "Quero um prato leve com frango e vegetais",
                 "model": "all-MiniLM-L6-v2",
-                "latency_ms": 45.2,
+                "latency_ms": 42.5,
+                "message": "Encontramos estas opções para você:",
                 "results": [
                     {
                         "dish_name": "Frango Grelhado com Salada",
-                        "score": 0.35,
-                        "Typical Price (USD)": 12.50,
-                        "text_for_embedding": "Frango Grelhado com Salada e legumes frescos."
+                        "score": 0.8542,
+                        "Typical Price (USD)": 12.50
                     }
                 ]
             }

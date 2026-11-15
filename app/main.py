@@ -7,22 +7,28 @@ from .search import DocumentVectorSearch
 from .config import settings
 from .schemas import PedidoClienteSchema, RespostaRecomendacaoSchema
 
-# Configuração básica de logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Inicializando motor de IA...")
-    buscador = DocumentVectorSearch()
+    logger.info("Inicializando motor de busca semântica...")
+    buscador = DocumentVectorSearch(model_name=settings.EMBEDDING_MODEL)
     try:
-        buscador.load_documents(settings.DATA_PATH)
-        buscador.process_documents()
+        carregado_do_disco = buscador.load_index(
+            settings.INDEX_PATH, settings.METADATA_PATH)
+
+        if not carregado_do_disco:
+            logger.info(
+                "Índice persistido não encontrado. Construindo a partir do dataset...")
+            buscador.load_documents(settings.DATA_PATH)
+            buscador.process_documents()
+            buscador.save_index(settings.INDEX_PATH, settings.METADATA_PATH)
+
         logger.info("Sistema pronto para recomendações.")
     except Exception as e:
-        logger.error(f"Erro crítico ao carregar dados: {e}")
-        # Armazenamos None para indicar que falhou o carregamento
+        logger.error(f"Erro crítico ao carregar dados ou índice: {e}")
         app.state.buscador = None
         raise e
 
@@ -32,15 +38,13 @@ async def lifespan(app: FastAPI):
 
     logger.info("Encerrando aplicação...")
 
-# Instanciação da API com título, descrição e versão
 app = FastAPI(
     title="API de Busca Semântica de Pratos de Rua",
-    description="API inteligente baseada em RAG e FAISS para recomendação semântica de pratos culinários.",
-    version="1.0.0",
+    description="API inteligente baseada em RAG, FAISS (Similaridade de Cosseno) e Pydantic.",
+    version="2.0.0",
     lifespan=lifespan
 )
 
-# Configuração do Middleware de CORS (Tarefa 6)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
@@ -52,7 +56,6 @@ app.add_middleware(
 
 @app.get("/health", status_code=status.HTTP_200_OK)
 async def health_check(request: Request):
-    """Endpoint de verificação de saúde da API e contagem de pratos indexados (Tarefa 4)."""
     buscador = getattr(request.app.state, "buscador", None)
 
     if not buscador or buscador.index is None:
@@ -61,10 +64,9 @@ async def health_check(request: Request):
             detail="O índice de busca não está carregado ou a aplicação falhou na inicialização."
         )
 
-    total_documents = len(buscador.documents)
     return {
         "status": "healthy",
-        "indexed_documents": total_documents,
+        "indexed_documents": len(buscador.documents),
         "model": settings.EMBEDDING_MODEL
     }
 
@@ -73,7 +75,6 @@ async def health_check(request: Request):
 async def sugerir_prato(request: Request, pedido: PedidoClienteSchema):
     start_time = time.time()
 
-    # Validação de segurança: verifica se o índice foi carregado (Tarefa 5)
     buscador = getattr(request.app.state, "buscador", None)
     if not buscador or buscador.index is None:
         raise HTTPException(
@@ -83,8 +84,13 @@ async def sugerir_prato(request: Request, pedido: PedidoClienteSchema):
 
     try:
         num_results = pedido.top_k if pedido.top_k else settings.TOP_K
+        min_score = pedido.min_score if pedido.min_score is not None else settings.MIN_SCORE
+
         resultados_faiss = buscador.query(
-            pedido.query, num_results=num_results)
+            question=pedido.query,
+            num_results=num_results,
+            min_score=min_score
+        )
 
         results_formatados = []
         for item in resultados_faiss:
@@ -100,14 +106,19 @@ async def sugerir_prato(request: Request, pedido: PedidoClienteSchema):
         end_time = time.time()
         latency_ms = round((end_time - start_time) * 1000, 2)
 
-        # Logging da consulta e do tempo de resposta (Tarefa 7)
+        if not results_formatados:
+            message = "Nenhum prato encontrado com o nível de similaridade desejado. Tente flexibilizar os termos ou o filtro mínimo."
+        else:
+            message = "Encontramos estas opções para você:"
+
         logger.info(
-            f"Consulta: '{pedido.query}' | Latência: {latency_ms} ms | Resultados retornados: {len(results_formatados)}")
+            f"Consulta: '{pedido.query}' | Latência: {latency_ms} ms | Resultados: {len(results_formatados)}")
 
         return {
             "query": pedido.query,
             "model": settings.EMBEDDING_MODEL,
             "latency_ms": latency_ms,
+            "message": message,
             "results": results_formatados
         }
     except Exception as e:
