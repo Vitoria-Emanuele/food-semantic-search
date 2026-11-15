@@ -7,6 +7,9 @@ from .search import DocumentVectorSearch
 from .config import settings
 from .schemas import PedidoClienteSchema, RespostaRecomendacaoSchema
 
+from fastapi.staticfiles import StaticFiles
+import os
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -131,3 +134,7 @@ async def sugerir_prato(request: Request, pedido: PedidoClienteSchema):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True)
+
+frontend_dist = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"))
+if os.path.exists(frontend_dist):
+    app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
