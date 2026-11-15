@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from vector_db import DocumentVectorSearch
+from .search import DocumentVectorSearch
 import uvicorn
 
 app = FastAPI(title="AI Agent - Recomendação de Pratos")
