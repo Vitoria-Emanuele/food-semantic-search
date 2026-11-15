@@ -1,11 +1,14 @@
 import type { SearchResponse } from "./types";
 
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
 export async function searchDishes(
   query: string,
   topK: number,
   signal?: AbortSignal
 ): Promise<SearchResponse> {
-  const response = await fetch('/sugerir-prato', {
+  const response = await fetch(`${API_BASE_URL}/sugerir-prato`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
