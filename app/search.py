@@ -9,10 +9,17 @@ from .config import settings
 class DocumentVectorSearch:
     def __init__(self, model_name: str = None):
         self.model_name = model_name or settings.EMBEDDING_MODEL
-        print(f"Carregando modelo de embeddings: {self.model_name}...")
-        self.model = SentenceTransformer(self.model_name)
+        self._model = None  # Não carrega o peso na inicialização para economizar RAM
         self.index = None
         self.documents = []
+
+    @property
+    def model(self):
+        """Carrega o modelo de forma preguiçosa (Lazy Loading) apenas quando necessário."""
+        if self._model is None:
+            print(f"Carregando modelo de embeddings sob demanda: {self.model_name}...")
+            self._model = SentenceTransformer(self.model_name)
+        return self._model
 
     def load_documents(self, file_path: str):
         """Carrega o arquivo JSON com os pratos limpos."""
