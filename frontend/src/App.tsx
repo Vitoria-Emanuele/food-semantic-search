@@ -43,7 +43,7 @@ export default function App() {
       <header>
         <h1>Street Food Semantic Search</h1>
         <p>Encontre pratos de rua do mundo todo usando Inteligência Artificial e FAISS.</p>
-        <p><a href="https://github.com/vitoria/Project_AgentAI" target="_blank" rel="noreferrer">GitHub Repository</a></p>
+        <p><a href="https://github.com/Vitoria-Emanuele/food-semantic-search" target="_blank" rel="noreferrer">GitHub Repository</a></p>
       </header>
 
       <div className="search-box">
