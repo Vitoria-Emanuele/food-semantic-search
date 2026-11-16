@@ -83,7 +83,8 @@ python -m venv venv
 # Windows: venv\Scripts\activate    |    Linux/macOS: source venv/bin/activate
 pip install -r requirements.txt
 
-cp .env.example .env        
+# Windows
+copy .env.example .env        
 uvicorn app.main:app --reload
 ```
 
@@ -145,7 +146,8 @@ Em vez de apenas "parece funcionar", a qualidade da busca é medida com **30 con
 
 **Como reproduzir:** `python -m eval.run_eval`
 
-**Limitações da avaliação:** o conjunto é pequeno (30 consultas) e foi rotulado por mim, antes de olhar os resultados do sistema, com o critério "o prato é relevante se bate com os ingredientes e o tipo de prato pedidos". Diferenças pequenas entre modelos devem ser lidas com cautela.
+**Limitações da avaliação:** o conjunto é pequeno (30 consultas) e foi rotulado por mim, antes de olhar os resultados do sistema, com o critério "o prato é relevante se bate com os ingredientes e o tipo de prato pedidos".
+- **Modelo de embeddings padrão: `all-MiniLM-L6-v2`.** Na avaliação (25 consultas com resposta esperada e 5 fora do tema), teve melhor Hit@1 (0,48 contra 0,36), melhor MRR (0,55 contra 0,46) e melhor rejeição correta, além de ser cerca de 2,5 vezes mais rápido (p50 de 38 ms contra 93 ms). O modelo multilíngue empatou em Hit@5.
 
 ## Decisões de projeto e trade-offs
 
@@ -165,8 +167,8 @@ Em vez de apenas "parece funcionar", a qualidade da busca é medida com **30 con
 
 ## Limitações
 
-- O dataset está em inglês e o modelo padrão é pequeno; consultas em português funcionam melhor com o modelo multilíngue (veja a tabela de avaliação).
-- É só recuperação: o sistema não gera explicações nem converse com o usuário.
+- O dataset está em inglês e o modelo padrão é pequeno. O modelo multilíngue testado não superou o padrão no conjunto geral de avaliação; o desempenho específico em consultas em português precisa ser analisado separadamente (conjunto pequeno).
+- É só recuperação: o sistema não gera explicações nem conversa com o usuário.
 - Sem filtros por país, preço ou restrição alimentar (esses campos foram removidos na deduplicação).
 - Sem autenticação nem limite de requisições na API pública.
 - Os pratos têm descrição curta; a qualidade da busca depende do texto disponível por prato.
