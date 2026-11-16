@@ -9,6 +9,7 @@
 **Busca semântica de pratos de rua:** descreva em linguagem natural o que você quer comer e receba os pratos mais parecidos, com a similaridade de cada um.
 
 👉 **[Experimente online](https://food-semantic-search.vercel.app)**
+
 <img width="1676" height="767" alt="image" src="https://github.com/user-attachments/assets/cc6dabe4-cbfb-4488-b1ec-d3107ef2c22c" />
 
 
