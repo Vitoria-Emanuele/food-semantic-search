@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     INDEX_PATH: str = "data/faiss_index.bin"
     METADATA_PATH: str = "data/metadata.json"
     TOP_K: int = 3
-    MIN_SCORE: float = 0.0
+    MIN_SCORE: float = 0.10
     CORS_ORIGINS: str = "http://localhost:5173"
 
     @property

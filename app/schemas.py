@@ -16,7 +16,7 @@ class PedidoClienteSchema(BaseModel):
         description="Número máximo de resultados a retornar (de 1 a 10)"
     )
     min_score: Optional[float] = Field(
-        None,
+        0.10,
         ge=0.0,
         le=1.0,
         description="Pontuação mínima de similaridade (0 a 1)"
@@ -35,7 +35,7 @@ class PedidoClienteSchema(BaseModel):
             "example": {
                 "query": "Quero um prato leve com frango e vegetais",
                 "top_k": 3,
-                "min_score": 0.2
+                "min_score": 0.1
             }
         }
 
